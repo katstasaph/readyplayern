@@ -1,2 +1,2 @@
 # readyplayern
-Ready Player n
+Ready Player n, a diversion for NaNoGenMo 2020
