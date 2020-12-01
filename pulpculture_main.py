@@ -61,7 +61,6 @@ def convert_to_origin(matcher, content):
     with content.retokenize() as retokenizer:
         retokenizer.merge(content[start:end])
     new_text = content.text
-    print(filtered_tokens)
     for token in filtered_tokens:
         new_text = re.sub(r"\b%s\b" % token[0], lambda match: token[1] if random.randint(0,100) < 50 else match.group(0), new_text)
     return new_text
