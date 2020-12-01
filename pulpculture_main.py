@@ -20,6 +20,8 @@ nlp = spacy.load("en_core_web_sm")
 from spacy.matcher import Matcher
 from spacy.util import filter_spans
 
+import html_formatter
+
 matcher = Matcher(nlp.vocab)
 tracery_tokens = []
 
@@ -64,7 +66,14 @@ def convert_to_origin(matcher, content):
         new_text = re.sub(r"\b%s\b" % token[0], lambda match: token[1] if random.randint(0,100) < 50 else match.group(0), new_text)
     return new_text
 
-with open('texts/corpora.json', encoding="utf8") as f:
+def fix_final_text(content):
+    new_text = re.sub(r'[\,\.]+(?=[\,\.\?\!])', '', content) # Get rid of double punctuation introduced
+    new_text = re.sub('a 100', '100', new_text) #alpha2digit misses "a hundred," etc.
+    new_text = re.sub('a 1000', '1000', new_text)
+    new_text = re.sub(r'(?<=[\.\?!]\s)(\w+)', lambda match: match.group().capitalize(), new_text)
+    return new_text
+
+with open('texts/corpora.json', encoding="utf16") as f:
     corpora = json.load(f)
 rules = corpora
 assemble_matcher_patterns(rules)
@@ -79,7 +88,6 @@ grammar = tracery.Grammar(rules)
 grammar.add_modifiers(base_english)
 f = open("story.txt", "w+")
 new_text = grammar.flatten("#origin#")
-new_text = re.sub(r'[\,\.]+(?=[\,\.\?\!])', '', new_text) # Get rid of double punctuation introduced
-new_text = re.sub('a 100', '100', new_text) #alpha2digit misses "a hundred"
-new_text = re.sub('a 1000', '1000', new_text)
+new_text = fix_final_text(new_text)
 f.write(new_text)
+html_formatter.create_html_page(new_text)
