@@ -66,7 +66,7 @@ def convert_to_origin(matcher, content):
     return new_text
 
 def fix_final_text(content):
-    new_text = re.sub(r'[\,\.]+(?=[\,\.\?\!])', '', content) # Get rid of double punctuation introduced
+    new_text = re.sub(r'[\,\.]+(?=[\,\.\?\!\;])', '', content) # Get rid of double punctuation introduced
     new_text = re.sub('a 100', '100', new_text) #alpha2digit misses "a hundred," etc.
     new_text = re.sub('a 1000', '1000', new_text)
     new_text = re.sub(r'(?<=[\.\?!]\s)(\w+)', lambda match: match.group().capitalize(), new_text)
@@ -90,3 +90,4 @@ new_text = grammar.flatten("#origin#")
 new_text = fix_final_text(new_text)
 f.write(new_text)
 html_formatter.create_html_page(new_text)
+f.close()
