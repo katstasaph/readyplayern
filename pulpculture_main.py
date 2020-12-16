@@ -31,15 +31,15 @@ def assemble_matcher_patterns(corpora):
             continue #numbers are handled separately
         tracery_pattern = "#" + key + "#"    
         matcher_pattern = None  
+        match_word = key[:-5] # 4 characters plus the underscore
         if ("noun" in key): #only keys of the form word_pos are used for matcher
-            match_word = key[:-5] # 4 characters plus the underscore
             matcher_pattern = [{'LOWER': match_word, 'POS': {'IN': ['NOUN', 'PROPN']}}] 
         elif ("verb" in key):
-            match_word = key[:-5]
             matcher_pattern = [{'LOWER': match_word, 'POS': 'VERB'}] 
-        elif ("adj" in key):
-            match_word = key[:-4]
+        elif ("adjc" in key):
             matcher_pattern = [{'LOWER': match_word, 'POS': 'ADJ'}] 
+        elif ("advb" in key):
+            matcher_pattern = [{'LOWER': match_word, 'POS': 'ADV'}]     
         if (matcher_pattern):
             matcher.add(tracery_pattern, None, matcher_pattern)        
     number_pattern = [{'POS': 'NUM', 'ENT_TYPE': {"NOT IN": ['DATE']}}]
@@ -66,9 +66,10 @@ def convert_to_origin(matcher, content):
     return new_text
 
 def fix_final_text(content):
-    new_text = re.sub(r'[\,\.]+(?=[\,\.\?\!\;])', '', content) # Get rid of double punctuation introduced
+    new_text = re.sub(r'[\,\.\-]+(?=[\,\.\?\!\;])', '', content) # Get rid of double punctuation introduced
     new_text = re.sub('a 100', '100', new_text) #alpha2digit misses "a hundred," etc.
     new_text = re.sub('a 1000', '1000', new_text)
+    new_text = re.sub('a 1,000', '1000', new_text)
     new_text = re.sub(r'(?<=[\.\?!]\s)(\w+)', lambda match: match.group().capitalize(), new_text)
     return new_text
 
