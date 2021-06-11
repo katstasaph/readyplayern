@@ -4,21 +4,19 @@ Created on Nov 23, 2020
 @author: Katherine Morayati
 '''
 
-import tracery
-from tracery.modifiers import base_english
 import json
-import re
 import random
-
-import text_to_num
-from text_to_num import text2num
-from text_to_num import alpha2digit
+import re
 
 import spacy
+import tracery
+from text_to_num import alpha2digit
+from text_to_num import text2num
+from tracery.modifiers import base_english
+
 nlp = spacy.load("en_core_web_sm")
 
 from spacy.matcher import Matcher
-from spacy.util import filter_spans
 
 import html_formatter
 
@@ -41,9 +39,9 @@ def assemble_matcher_patterns(corpora):
         elif ("advb" in key):
             matcher_pattern = [{'LOWER': match_word, 'POS': 'ADV'}]     
         if (matcher_pattern):
-            matcher.add(tracery_pattern, None, matcher_pattern)        
-    number_pattern = [{'POS': 'NUM', 'ENT_TYPE': {"NOT IN": ['DATE']}}]
-    matcher.add("numeral", None, number_pattern)
+            matcher.add(tracery_pattern, [matcher_pattern])        
+    number_pattern = [{'POS': 'NUM', 'ENT_TYPE': {"NOT_IN": ['DATE']}}]
+    matcher.add("numeral", [number_pattern])
 
 
 def convert_to_origin(matcher, content):
@@ -70,14 +68,12 @@ def fix_final_text(content):
     new_text = re.sub('a 100', '100', new_text) #alpha2digit misses "a hundred," etc.
     new_text = re.sub('a 1000', '1000', new_text)
     new_text = re.sub('a 1,000', '1000', new_text)
-    new_text = re.sub(r'(?<=[\.\?!]\s)(\w+)', lambda match: match.group().capitalize(), new_text)
     return new_text
 
 with open('texts/corpora.json', encoding="utf16") as f:
     corpora = json.load(f)
 rules = corpora
 assemble_matcher_patterns(rules)
-
 base_text = open('texts/wizard.txt', 'r', encoding="utf8")
 base_text = alpha2digit(base_text.read(), "en") # Ensuring compound numbers work in matcher
 content = nlp(base_text)
