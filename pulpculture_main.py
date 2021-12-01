@@ -14,6 +14,9 @@ from text_to_num import alpha2digit
 from text_to_num import text2num
 from tracery.modifiers import base_english
 
+import tkinter as tk
+from tkinter import filedialog
+
 nlp = spacy.load("en_core_web_sm")
 
 from spacy.matcher import Matcher
@@ -22,6 +25,14 @@ import html_formatter
 
 matcher = Matcher(nlp.vocab)
 tracery_tokens = []
+
+def get_referential_density():
+    while True:
+        density = input("How lovingly nostalgic and wildly referential a story would you like? (0-100)").strip()
+        if density.isdigit():
+            break
+        print("Please enter a number from 0 to 100.")
+    return int(density)
 
 def assemble_matcher_patterns(corpora):
     for key in corpora:
@@ -44,7 +55,7 @@ def assemble_matcher_patterns(corpora):
     matcher.add("numeral", [number_pattern])
 
 
-def convert_to_origin(matcher, content):
+def convert_to_origin(matcher, content, density):
     matches = matcher(content)
     for match_id, start, end in matches:
         span = content[start:end]
@@ -60,24 +71,28 @@ def convert_to_origin(matcher, content):
         retokenizer.merge(content[start:end])
     new_text = content.text
     for token in filtered_tokens:
-        new_text = re.sub(r"\b%s\b" % token[0], lambda match: token[1] if random.randint(0,100) < 50 else match.group(0), new_text)
+        new_text = re.sub(r"\b%s\b" % token[0], lambda match: token[1] if random.randint(0,100) <= density else match.group(0), new_text)
     return new_text
 
 def fix_final_text(content):
     new_text = re.sub(r'[\,\.\-]+(?=[\,\.\?\!\;])', '', content) # Get rid of double punctuation introduced
-    new_text = re.sub('a 100', '100', new_text) #alpha2digit misses "a hundred," etc.
-    new_text = re.sub('a 1000', '1000', new_text)
-    new_text = re.sub('a 1,000', '1000', new_text)
+    new_text = re.sub('[aA] 100', '100', new_text) #alpha2digit misses "a hundred," etc.
+    new_text = re.sub('[aA] 1000', '1000', new_text)
+    new_text = re.sub('[aA] 1,000', '1000', new_text)
     return new_text
 
+root = tk.Tk()
+root.withdraw()
+file_path = filedialog.askopenfilename()
 with open('texts/corpora.json', encoding="utf16") as f:
     corpora = json.load(f)
+density = get_referential_density()
 rules = corpora
 assemble_matcher_patterns(rules)
-base_text = open('texts/wizard.txt', 'r', encoding="utf8")
+base_text = open(file_path, 'r', encoding="utf8")
 base_text = alpha2digit(base_text.read(), "en") # Ensuring compound numbers work in matcher
 content = nlp(base_text)
-content = convert_to_origin(matcher, content)
+content = convert_to_origin(matcher, content, density)
 origin = {"origin": content}
 rules.update(origin)
 grammar = tracery.Grammar(rules)
